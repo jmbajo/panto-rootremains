@@ -44,16 +44,33 @@ def test():
 @app.route('/process_panto', methods=['POST'])
 @cross_origin()
 def procesar_imagen():
-    imgs = get_image_files(img_folder)
-    print(imgs)
+    data = request.get_json()
+    if data is None:
+        return "Data Vacía"
+    
+    if "image_uuid" not in data or "imgs_path" not in data:
+        return jsonify({'mensaje': 'Faltan datos'})
 
+    image_uuid = data["image_uuid"]
+    imgs_path = data["imgs_path"]
+
+    # print(image_uuid, imgs_path)
+
+    imgs = get_image_files(imgs_path)
+    # print(imgs)
+    pos_list = [path.stem for path in imgs]
+    print(pos_list)
 
     inferencer = FastAIClassifierInferencer(checkpoint_file, labels)
     inferencer.init(cpu=True)
     results = inferencer.process(imgs)
 
+    to_ret = {}
+    for i in range(len(pos_list)):
+        to_ret[pos_list[i]] = results[i]
+
     print(results)
-    return results
+    return to_ret
 
 
 if __name__ == '__main__':
